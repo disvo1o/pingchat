@@ -3,28 +3,34 @@
 Telegram group mini-game for table tennis.
 
 ## MVP
-- Start a match by replying to a friend's message with `/pong` or using `/pong @username`.
-- The opponent accepts the challenge.
-- Players take turns choosing a shot using inline buttons.
+- Challenge a friend by replying to their message with /pong.
+- The opponent accepts or declines.
+- Players choose shots with inline buttons.
 - First to 11 points, win by 2.
-- One match message is edited after each rally to keep the group clean.
-- Match history and player statistics are stored in Supabase.
+- The bot edits one match message instead of spamming the chat.
+- Player statistics are stored in SQLite.
 
 ## Stack
 - Python 3.12+
 - aiogram 3.22
-- Supabase Postgres via `DATABASE_URL`
-- Railway worker
+- SQLite (aiosqlite)
+- Railway worker with a persistent Volume
 
-## Environment variables
-- `BOT_TOKEN` — Telegram bot token
-- `DATABASE_URL` — Supabase Postgres connection string (use the pooler connection string if required)
-- `TURN_TIMEOUT_SECONDS` — optional, default `30`
+## Railway variables
+- BOT_TOKEN — token from @BotFather
+- DB_PATH — /data/pingpong.db (when the Volume is mounted at /data)
+
+The bot creates its tables automatically. No Supabase account, DATABASE_URL, or manual SQL setup is needed.
+
+## Railway setup
+1. Deploy this repository from GitHub.
+2. Add BOT_TOKEN.
+3. Add a Volume with Mount Path /data.
+4. Set DB_PATH to /data/pingpong.db.
+5. Deploy.
 
 Run locally:
 ```bash
 pip install -r requirements.txt
-python main.py
+DB_PATH=pingpong.db BOT_TOKEN=your-token python main.py
 ```
-
-Run `schema.sql` in the Supabase SQL editor before starting the bot.
