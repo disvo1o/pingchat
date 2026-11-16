@@ -2,7 +2,6 @@ import asyncio
 import logging
 import os
 import random
-from contextlib import asynccontextmanager
 
 import asyncpg
 from aiogram import Bot, Dispatcher, F
@@ -33,7 +32,7 @@ SHOTS = {
 
 
 def display_name(user) -> str:
-    return user.full_name or user.username or str(user.id)
+    return getattr(user, "full_name", None) or getattr(user, "title", None) or getattr(user, "username", None) or str(user.id)
 
 
 async def ensure_player(user):
@@ -79,6 +78,8 @@ async def get_match(match_id: int):
 
 async def finish_match(row, winner_id: int, note: str):
     loser_id = row["player2_id"] if winner_id == row["player1_id"] else row["player1_id"]
+    winner_score = row["score1"] if winner_id == row["player1_id"] else row["score2"]
+    loser_score = row["score2"] if winner_id == row["player1_id"] else row["score1"]
     async with pool.acquire() as conn:
         await conn.execute(
             """update matches set status='finished', winner_id=$2, finished_at=now()
@@ -91,7 +92,7 @@ async def finish_match(row, winner_id: int, note: str):
                points_scored=points_scored+case when telegram_id=$1 then $3 else $4 end,
                points_conceded=points_conceded+case when telegram_id=$1 then $4 else $3 end,
                updated_at=now() where telegram_id in ($1,$2)""",
-            winner_id, loser_id, row["score1"], row["score2"]
+            winner_id, loser_id, winner_score, loser_score
         )
     winner = row["player1_name"] if winner_id == row["player1_id"] else row["player2_name"]
     await bot.edit_message_text(
